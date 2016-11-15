@@ -33,19 +33,48 @@ app.config(function($routeProvider){
     templateUrl : 'pages/profile.html',
     controller : 'ProfileController'
   })
+  
   .otherwise({redirectTo: '/'});
 });
 
-app.controller('DashboardController', ['$scope', '$http', function($scope, $http) {
+app.factory('Scopes', function ($rootScope) {
+    var mem = {};
+ 
+    return {
+        store: function (key, value) {
+            mem[key] = value;
+        },
+        get: function (key) {
+            return mem[key];
+        }
+    };
+});
+
+//dashboard
+app.controller('DashboardController', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from DashboardController");
+	
+	//session checking
+	$http.get('/sessioncheck').success(function(response) {
+    console.log("I got the data I requested");
+    console.log(response);
+	
+	if(response.toString() == 'not exist'){
+		$rootScope.login_user="";
+	}
+	else{
+		$rootScope.login_user=response.toString();
+	}
+
+  });
 
 }]);
 
 //billing
-app.controller('BillingController', ['$scope', '$http', function($scope, $http) {
+app.controller('BillingController', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from BillingController");
 	
-	$http.get('/sensorlist').success(function(response) {
+	$http.get('/sensorlist/'+ $rootScope.login_user).success(function(response) {
 		console.log("I got the data I requested");
 		console.log(response);
 		
@@ -56,9 +85,15 @@ app.controller('BillingController', ['$scope', '$http', function($scope, $http) 
 				var hours=0;
 				var minutes=0;
 				
-				//hours = Number(response[i].duration)/60;
-				//minutes = Number(response[i].duration)%60;
-				//response[i].duration =hours.toString()+":"+minutes.toString();
+				//convert minutes into hours and minutes format
+				hours = parseInt(Number(response[i].duration)/60);
+				minutes = parseInt(Number(response[i].duration)%60);
+				var duration =hours.toString()+":"+minutes.toString();
+				
+				//display duration in HH:mm format
+				response[i].duration=duration;
+				
+				//calculate total bill (all sensors)
 				total=total + parseFloat(response[i].bill);
 			}
 		
@@ -72,7 +107,7 @@ app.controller('BillingController', ['$scope', '$http', function($scope, $http) 
 }]);
 
 //add sensor
-app.controller('AddSensorController', ['$scope', '$http', '$window', function($scope, $http,  $window) {
+app.controller('AddSensorController', ['$scope', '$http', '$window', '$rootScope', function($scope, $http,  $window, $rootScope) {
     console.log("Hello from AddSensorController");
   
   //addSensor() 
@@ -81,6 +116,7 @@ app.controller('AddSensorController', ['$scope', '$http', '$window', function($s
   $scope.sensor.state = "Active";
   $scope.sensor.bill = "0.00";
   $scope.sensor.downtime = "";
+  $scope.sensor.username = $rootScope.login_user;
   
   if($scope.sensor.type == "Bus Sensor" || $scope.sensor.type == "Bus Stop Sensor"){
 	$scope.sensor.cost= "0.20";
@@ -99,11 +135,11 @@ app.controller('AddSensorController', ['$scope', '$http', '$window', function($s
 }]);
 
 //view sensor
-app.controller('ViewSensorController', ['$scope', '$http', function($scope, $http) {
+app.controller('ViewSensorController', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from ViewSensorController");
 	
 	var refresh = function() {
-		$http.get('/sensorlist').success(function(response) {
+		$http.get('/sensorlist/' + $rootScope.login_user).success(function(response) {
 		console.log("I got the data I requested");
 		
 		for(i=0;i<response.length;i++)
@@ -170,40 +206,18 @@ app.controller('ViewSensorController', ['$scope', '$http', function($scope, $htt
 app.controller('MapController', ['$scope', '$http', function($scope, $http) {
     console.log("Hello from MapController");
 	
-	var myLatlng = new google.maps.LatLng(30.2353412,-92.010498);
-    var myOptions = {
-        zoom: 13,
-        center: myLatlng,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-    }
-    var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-	
-	//Used to remember markers
-	var markerStore = {};
-	
-    function getMarkers() {
-		$.get('/markers', {}, function(res,resp) {
-        for(var i=0, len=res.length; i<len; i++) {
-
-            //Do we have this marker already?
-            if(markerStore.hasOwnProperty(res[i].id)) {
-                markerStore[res[i].id].setPosition(new google.maps.LatLng(res[i].position.lat,res[i].position.long));
-            } else {
-                var marker = new google.maps.Marker({
-                    position: new google.maps.LatLng(res[i].position.lat,res[i].position.long),
-                    title:res[i].name,
-                    map:map
-                }); 
-                markerStore[res[i].id] = marker;
-            }
-        }
-        window.setTimeout(getMarkers,INTERVAL);
-    }, "json");
-}
 
 }]);
 
 //view and edit profile
-app.controller('ProfileController', ['$scope', '$http', function($scope, $http) {
+app.controller('ProfileController', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from ProfileController");
+	
+	$http.get('/userprofile/'+$rootScope.login_user).success(function(response) {
+		console.log("I got the data I requested");
+
+		$scope.user = response;
+		
+	});
+	
 }]);

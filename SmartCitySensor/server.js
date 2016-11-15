@@ -8,6 +8,17 @@ var bodyParser = require('body-parser');
 var moment = require('moment-timezone');
 var tc = require("timezonecomplete");   
 var NodeGeocoder = require('node-geocoder');
+var session = require('express-session');
+
+var sess;
+
+app.use(session({
+    secret: 'secret',
+    saveUninitialized: false,
+    resave: false,
+    HttpOnly: false, 
+    
+}));
 
 var options = {
   provider: 'google',
@@ -24,10 +35,10 @@ app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.json());
 
 //list of sensors
-app.get('/sensorlist', function (req, res) {
+app.get('/sensorlist/:name', function (req, res) {
   console.log('I received a GET request');
-
-  db.sensorlist.find(function (err, docs) {
+	var name = req.params.name;
+  db.sensorlist.find({"username" : name}, function (err, docs) {
     console.log(docs);
     res.json(docs);
   });
@@ -160,6 +171,123 @@ app.put('/sensorbilling/:id', function (req, res){
 	
 	});
 	
+});
+
+//user sign up
+//insert user details
+app.post('/userlist', function (req, res) {
+  console.log(req.body);
+  db.userlist.insert(req.body, function(err, doc) {
+    res.json(doc);
+  });
+});
+
+//check valid username and password
+app.get('/userlist/:name/:password', function (req, res) {
+	
+  console.log('I received a GET request');
+
+  db.userlist.find({},{"username":1,"password":1,"type":1,_id:0}).toArray(function (err, docs) {
+	console.log(docs);
+	//console.log(docs[0].username);
+	flag = "unsuccessful";
+	
+	for (i=0; i<docs.length; i++)
+	{
+		if(docs[i].username.toString() == req.params.name.toString() & docs[i].password.toString() == req.params.password.toString())
+		{
+			console.log('successful');
+			flag = "successful"
+			break;
+		}
+	}
+	
+	if(flag == "successful")
+	{
+		/*res.setHeader('Set-Cookie', cookie.serialize('username', String(req.params.name), {
+			httpOnly: true,
+		}));*/
+		sess = req.session;
+		sess.username=req.params.name;
+		res.send("successful");
+	}
+	else
+	{
+		res.send("unsuccessful");
+	}
+	
+  });
+});
+
+
+//session check
+app.get('/sessioncheck', function (req, res) {
+	
+  console.log('I received a session check request');
+  sess = req.session;
+	
+  if(sess.username)
+  {
+	  res.send(sess.username);
+  }
+  else
+  {
+	  res.send("not exist");
+  }
+	
+});
+
+//session destroy
+app.get('/sessiondestroy', function (req, res) {
+	
+  console.log('I received a session destroy request');
+  sess = req.session;
+  sess.destroy(function(err) {
+        if(err){
+             console.log('Error destroying session');
+			 res.send("not done");
+        }else{
+            console.log('Session destroy successfully');
+			res.send("done");
+        }
+    });
+	
+});
+
+//to find type of user
+app.get('/usertype/:name', function (req, res) {
+	
+  console.log('I received a GET request');
+
+  db.userlist.findOne({"username":req.params.name},(function (err, docs) {
+	console.log(docs);
+	res.send(docs.type);
+
+	}));
+});
+
+//list of sensors for admin
+app.get('/sensorlist_admin', function (req, res) {
+	
+  console.log('I received a GET request');
+
+  db.sensorlist.find({},(function (err, docs) {
+	console.log(docs);
+	res.send(docs);
+
+	}));
+});
+
+//user profile info for admin and normal user
+app.get('/userprofile/:name', function (req, res) {
+	
+  console.log('I received a GET request');
+
+  db.userlist.findOne({"username":req.params.name},(function (err, docs) {
+	console.log(docs);
+	res.send(docs);
+
+	}));
 });
 
 
