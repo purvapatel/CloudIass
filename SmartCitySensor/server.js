@@ -40,8 +40,8 @@ app.post('/sensorlist', function (req, res) {
   req.body.creationDate = moment().tz("America/Los_Angeles").format("MM-DD-YYYY");
   //creation time -> current time
   req.body.creationTime = moment().tz("America/Los_Angeles").format("HH:mm");
-  req.body.uptime = moment().tz("America/Los_Angeles").format("HH:mm");
- 
+  req.body.uptime = moment().tz("America/Los_Angeles").format("MM-DD-YYYY  HH:mm:ss");
+  req.body.duration = 0;
   
 	//get latitude and longitude from location
 	geocoder.geocode(req.body.location, function(err, resp) {
@@ -53,11 +53,7 @@ app.post('/sensorlist', function (req, res) {
 			console.log("data entry done");
 			res.json(doc);
 		});
-		  
 	});
-	
-  
-  
 });
 
 //delete sensor
@@ -94,7 +90,7 @@ app.put('/sensorlisttime/:id/:state', function (req, res) {
   if(req.params.state == "Active"){ //active -> update uptime
 		db.sensorlist.findAndModify({
 		query: {_id: mongojs.ObjectId(id)},
-		update: {$set: {"uptime": moment().tz("America/Los_Angeles").format("HH:mm")}},
+		update: {$set: {"uptime": moment().tz("America/Los_Angeles").format("MM-DD-YYYY HH:mm:ss")}},
 		new: true}, function (err, doc) {
 		  res.json	(doc);
 		}
@@ -103,7 +99,7 @@ app.put('/sensorlisttime/:id/:state', function (req, res) {
   else { //deactive -> update downtime
 		db.sensorlist.findAndModify({
 		query: {_id: mongojs.ObjectId(id)},
-		update: {$set: {"downtime": moment().tz("America/Los_Angeles").format("HH:mm")}},
+		update: {$set: {"downtime": moment().tz("America/Los_Angeles").format("MM-DD-YYYY HH:mm:ss")}},
 		new: true}, function (err, doc) {
 		  res.json	(doc);
 		}
@@ -126,12 +122,23 @@ app.put('/sensorbilling/:id', function (req, res){
 		var startTime = doc.downtime;
 		var endTime = doc.uptime;
 		//difference between uptime and downtione in HH:mm format
-		console.log(time_diff(startTime,endTime));
-		var timeDifference = time_diff(startTime,endTime);
+		console.log(startTime+" and "+endTime);
+		
+		//test
+		
+		//find difference between uptime and downtime -> working time of sensor
+		var ms = moment(startTime,"MM-DD-YYYY HH:mm").diff(moment(endTime,"MM-DD-YYYY HH:mm"));
+		var d = moment.duration(ms);
+		var timeDifference = Math.floor(d.asHours()) + moment.utc(ms).format(":mm:ss");
+		
+		console.log(timeDifference);
+		
+		//convert into minutes
 		var timeParts = timeDifference.split(':');    
 		var minutes=Number(timeParts[0])*60+Number(timeParts[1]);
 		console.log(minutes);
 		
+		var duration = Number(doc.duration) + minutes;
 		//calculate cost based on minutes (difference between uptime and downtime)
 		if(doc.type == "Bus Sensor" || doc.type == "Bus Stop Sensor"){
 			cost = Number(doc.bill) + 0.20*minutes;
@@ -144,7 +151,7 @@ app.put('/sensorbilling/:id', function (req, res){
 		//update bill into database
 		db.sensorlist.findAndModify({
 			query: {_id: mongojs.ObjectId(id)},
-			update: {$set: {"bill": Math.round(cost * 100) / 100}},
+			update: {$set: {"bill": Math.round(cost * 100) / 100, "duration":duration}},
 			new: true}, function (err, doc) {
 			  res.json	(doc);
 		});
@@ -155,19 +162,6 @@ app.put('/sensorbilling/:id', function (req, res){
 	
 });
 
-//function for find difference between twin time in HH:mm format
-function time_diff(t1, t2) 
-{
-  var t1parts = t1.split(':');    
-  var t1cm=Number(t1parts[0])*60+Number(t1parts[1]);
-
-  var t2parts = t2.split(':');    
-  var t2cm=Number(t2parts[0])*60+Number(t2parts[1]);
-
-  var hour =Math.floor((t1cm-t2cm)/60);    
-  var min=Math.floor((t1cm-t2cm)%60);    
-  return (hour+':'+min); 
-}
 
 app.listen(3000);
 console.log("Server running on port 3000");

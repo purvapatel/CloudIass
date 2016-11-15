@@ -44,6 +44,31 @@ app.controller('DashboardController', ['$scope', '$http', function($scope, $http
 //billing
 app.controller('BillingController', ['$scope', '$http', function($scope, $http) {
     console.log("Hello from BillingController");
+	
+	$http.get('/sensorlist').success(function(response) {
+		console.log("I got the data I requested");
+		console.log(response);
+		
+		var total=0;
+			
+			for(var i=0; i<response.length; i++)
+			{
+				var hours=0;
+				var minutes=0;
+				
+				//hours = Number(response[i].duration)/60;
+				//minutes = Number(response[i].duration)%60;
+				//response[i].duration =hours.toString()+":"+minutes.toString();
+				total=total + parseFloat(response[i].bill);
+			}
+		
+		$scope.sensor_total = total;
+		$scope.sensorlist = response;
+		
+		
+		
+		});
+		
 }]);
 
 //add sensor
@@ -58,10 +83,10 @@ app.controller('AddSensorController', ['$scope', '$http', '$window', function($s
   $scope.sensor.downtime = "";
   
   if($scope.sensor.type == "Bus Sensor" || $scope.sensor.type == "Bus Stop Sensor"){
-	$scope.sensor.cost= "$0.20";
+	$scope.sensor.cost= "0.20";
   }
   else{
-	$scope.sensor.cost= "$0.30";  
+	$scope.sensor.cost= "0.30";  
   }
   $http.post('/sensorlist', $scope.sensor).success(function(response) {
 	console.log("done");
@@ -144,6 +169,38 @@ app.controller('ViewSensorController', ['$scope', '$http', function($scope, $htt
 //maps
 app.controller('MapController', ['$scope', '$http', function($scope, $http) {
     console.log("Hello from MapController");
+	
+	var myLatlng = new google.maps.LatLng(30.2353412,-92.010498);
+    var myOptions = {
+        zoom: 13,
+        center: myLatlng,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+    }
+    var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+	
+	//Used to remember markers
+	var markerStore = {};
+	
+    function getMarkers() {
+		$.get('/markers', {}, function(res,resp) {
+        for(var i=0, len=res.length; i<len; i++) {
+
+            //Do we have this marker already?
+            if(markerStore.hasOwnProperty(res[i].id)) {
+                markerStore[res[i].id].setPosition(new google.maps.LatLng(res[i].position.lat,res[i].position.long));
+            } else {
+                var marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(res[i].position.lat,res[i].position.long),
+                    title:res[i].name,
+                    map:map
+                }); 
+                markerStore[res[i].id] = marker;
+            }
+        }
+        window.setTimeout(getMarkers,INTERVAL);
+    }, "json");
+}
+
 }]);
 
 //view and edit profile
