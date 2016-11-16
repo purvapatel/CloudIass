@@ -12,6 +12,8 @@ loginapp.controller('LoginController', ['$scope', '$http', '$window', function($
 	//insert user details
 	$scope.addUser = function() {
 	console.log($scope.user);
+	$scope.user.type="Normal User";
+	
 	$http.post('/userlist', $scope.user).success(function(response) {
 		console.log(response);
 		$window.alert("Registration Successful..!!");
