@@ -34,6 +34,11 @@ app.config(function($routeProvider){
     controller : 'ProfileController'
   })
   
+  .when('/sensordata',{
+    templateUrl : 'pages/sensordata.html',
+    controller : 'SensorDataController'
+  })
+  
   .otherwise({redirectTo: '/'});
 });
 
@@ -220,4 +225,53 @@ app.controller('ProfileController', ['$scope', '$http', '$rootScope', function($
 		
 	});
 	
+}]);
+
+
+//fetch sensor data
+app.controller('SensorDataController', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
+    console.log("Hello from SensorDataController");
+	
+	$http.get('/sensorlist/' + $rootScope.login_user).success(function(response) {
+		console.log("I got the data I requested");
+		
+		$scope.sensorlist = response;
+		
+		});
+		
+		$scope.getData = function(group,type) {
+			$http.get('/getsensordata/'+group+'/'+type).success(function(response) {
+			console.log("I got the data I requested");
+ 
+			response.state = " State : " + response.state;
+			if(response.speed == undefined){
+				response.speed = "-"
+			}
+			response.speed = "Speed : " + response.speed;
+			if(response.traffic == undefined){
+				response.traffic = "-"
+			}
+			response.traffic = "Traffic : "+ response.traffic;
+			if(response.delay == undefined){
+				response.delay = "-"
+			}
+			response.delay = "Delay : "+ response.delay;
+			if(response.last_bus_num == undefined){
+				response.last_bus_num = "-"
+			}
+			response.last_bus_num = "Previous Bus Number : " + response.last_bus_num;
+			if(response.next_bus_num == undefined){
+				response.next_bus_num = "-"
+			}
+			response.next_bus_num = "Next Bus Number : " + response.next_bus_num;
+			response.latitude = "Latitude : " + response.latitude;
+			response.longitude = "Longitude : " + response.longitude;
+			
+			$scope.sensor = response;
+		
+	});
+		
+		};
+		
+
 }]);

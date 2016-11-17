@@ -290,6 +290,17 @@ app.get('/userprofile/:name', function (req, res) {
 	}));
 });
 
+app.get('/getsensordata/:group/:type', function (req, res) {
+	
+  console.log('I received a GET request');
+
+  db.sensordata.findOne({"group": req.params.group, "type": req.params.type},(function (err, docs) {
+	console.log(docs);
+	res.send(docs);
+
+	}));
+});
+
 
 app.listen(3000);
 console.log("Server running on port 3000");
