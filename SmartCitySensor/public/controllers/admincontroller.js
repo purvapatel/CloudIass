@@ -14,8 +14,18 @@ adminapp.config(function($routeProvider){
   })
   
   .when('/viewsensor',{
-    templateUrl : 'admin/viewsensor_admin.html',
+    templateUrl : 'admin/viewsensor_user.html',
     controller : 'ViewSensorCtrl'
+  })
+  
+  .when('/viewadminsensor',{
+    templateUrl : 'admin/viewsensor_admin.html',
+    controller : 'ViewAdminSensorCtrl'
+  })
+  
+  .when('/createsensor',{
+    templateUrl : 'admin/createsensor_admin.html',
+    controller : 'CreateSensorCtrl'
   })
   
   .when('/map',{
@@ -137,3 +147,41 @@ adminapp.controller('ProfileCtrl', ['$scope', '$http', '$rootScope', function($s
 	
 	
 }]);
+
+//create new sensor
+adminapp.controller('CreateSensorCtrl', ['$scope', '$http', '$rootScope', '$window', function($scope, $http, $rootScope, $window) {
+    console.log("Hello from CreateSensorCtrl");
+	
+  //createSensor() 
+  $scope.createSensor = function() {
+		  console.log($scope.sensor);
+		  $scope.sensor.adminname = $rootScope.login_user;
+		  
+		  if($scope.sensor.type == "Bus Sensor" || $scope.sensor.type == "Bus Stop Sensor"){
+			$scope.sensor.cost= "0.20";
+		  }
+		  else{
+			$scope.sensor.cost= "0.30";  
+		  }
+		  $http.post('/createphysicalsensorlist', $scope.sensor).success(function(response) {
+			console.log("done");
+			console.log(response);
+			$window.alert("Sensor added successfully .. !!")
+			$scope.sensor="";
+		  });
+	};
+}]);
+
+//view sensor
+adminapp.controller('ViewAdminSensorCtrl', ['$scope', '$http','$rootScope', function($scope, $http, $rootScope) {
+    console.log("Hello from ViewSensorCtrl");
+	
+		$http.get('/physicalsensorlist_admin/'+$rootScope.login_user).success(function(response) {
+		console.log("I got the data I requested");
+		
+		$scope.sensorlist = response;
+		
+		});
+
+}]);
+

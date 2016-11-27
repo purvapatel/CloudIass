@@ -55,6 +55,47 @@ app.factory('Scopes', function ($rootScope) {
     };
 });
 
+//unique
+app.filter('unique', function () {
+
+    return function (items, filterOn) {
+
+        if (filterOn === false) {
+            return items;
+        }
+
+        if ((filterOn || angular.isUndefined(filterOn)) && angular.isArray(items)) {
+            var hashCheck = {}, newItems = [];
+
+            var extractValueToCompare = function (item) {
+                if (angular.isObject(item) && angular.isString(filterOn)) {
+                    return item[filterOn];
+                } else {
+                    return item;
+                }
+            };
+
+            angular.forEach(items, function (item) {
+                var valueToCheck, isDuplicate = false;
+
+                for (var i = 0; i < newItems.length; i++) {
+                    if (angular.equals(extractValueToCompare(newItems[i]), extractValueToCompare(item))) {
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+                if (!isDuplicate) {
+                    newItems.push(item);
+                }
+
+            });
+            items = newItems;
+        }
+        return items;
+    };
+});
+
+
 //dashboard
 app.controller('DashboardController', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from DashboardController");
@@ -115,26 +156,55 @@ app.controller('BillingController', ['$scope', '$http', '$rootScope', function($
 app.controller('AddSensorController', ['$scope', '$http', '$window', '$rootScope', function($scope, $http,  $window, $rootScope) {
     console.log("Hello from AddSensorController");
   
+  //get sensor group name based on sensor type
+  $scope.getSensorGroup = function(type){
+	  
+		$http.get('/getsensorgroup/'+type).success(function(response) {
+		console.log(response);
+		$scope.grouplist = [];
+		
+		for(var i=0;i< response.length; i++)
+		{
+			$scope.grouplist.push(response[i].group);
+		}
+	});
+  };
+  
+  //get sensor name based on sensor group
+  $scope.getSensorName = function(group,type){
+	  
+		$http.get('/getsensorname/'+group+'/'+type).success(function(response) {
+		console.log(response);
+		$scope.namelist = [];
+		
+		for(var i=0;i< response.length; i++)
+		{
+			$scope.namelist.push(response[i].name);
+		}
+	});
+  };
+  
   //addSensor() 
   $scope.addSensor = function() {
-  console.log($scope.sensor);
-  $scope.sensor.state = "Active";
-  $scope.sensor.bill = "0.00";
-  $scope.sensor.downtime = "";
-  $scope.sensor.username = $rootScope.login_user;
-  
-  if($scope.sensor.type == "Bus Sensor" || $scope.sensor.type == "Bus Stop Sensor"){
-	$scope.sensor.cost= "0.20";
-  }
-  else{
-	$scope.sensor.cost= "0.30";  
-  }
-  $http.post('/sensorlist', $scope.sensor).success(function(response) {
-	console.log("done");
-    console.log(response);
-	$window.alert("Sensor added successfully .. !!")
-	$scope.sensor="";
-  });
+	  console.log($scope.sensor);
+	  $scope.sensor.state = "Active";
+	  $scope.sensor.bill = "0.00";
+	  $scope.sensor.downtime = "";
+	  $scope.sensor.username = $rootScope.login_user;
+	  $scope.sensor.duration = 0;
+	  
+	  if($scope.sensor.type == "Bus Sensor" || $scope.sensor.type == "Bus Stop Sensor"){
+		$scope.sensor.cost= "0.20";
+	  }
+	  else{
+		$scope.sensor.cost= "0.30";  
+	  }
+	  $http.post('/sensorlist', $scope.sensor).success(function(response) {
+		console.log("done");
+		console.log(response);
+		$window.alert("Sensor added successfully .. !!")
+		$scope.sensor="";
+	  });
 };
 
 }]);
