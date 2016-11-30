@@ -186,7 +186,7 @@ app.get('/userlist/:name/:password', function (req, res) {
 	
 	for (i=0; i<docs.length; i++)
 	{
-		if(docs[i].username.toString() == req.params.name.toString() & docs[i].password.toString() == req.params.password.toString())
+		if((docs[i].username == req.params.name) && (docs[i].password  == req.params.password))
 		{
 			console.log('successful');
 			flag = "successful"
@@ -282,6 +282,32 @@ app.get('/userprofile/:name', function (req, res) {
 	}));
 });
 
+
+//geting lati. and longi.
+app.get('/getgeodata/:name', function (req, res) {
+	
+  console.log('I received a GET request');
+
+  db.sensorlist.find({"username":req.params.name},(function (err, docs) {
+	console.log(docs);
+	res.send(docs);
+
+	}));
+});
+
+//geting latitude. and longi.
+app.get('/getgeodata2/:name', function (req, res) {
+	
+  console.log('I received a GET request');
+
+  db.physicalsensorlist .find({"latitude":req.params.name},(function (err, docs) {
+	console.log(docs);
+	res.send(docs);
+
+	}));
+});
+
+
 app.get('/getsensordata/:group/:type', function (req, res) {
 	
   console.log('I received a GET request');
@@ -335,6 +361,7 @@ app.get('/getsensorgroup/:type', function (req, res) {
 	}));
 });
 
+
 //get sensor group for dropdown list in add sensor -> user 
 app.get('/getsensorname/:group/:type', function (req, res) {
 	
@@ -347,5 +374,145 @@ app.get('/getsensorname/:group/:type', function (req, res) {
 	}));
 });
 
+//get sensor count based on username
+app.get('/getSensorCountPerUser/:name', function (req, res) {
+	  console.log('I received a GET request getSensorCountPerUser');
+		var name = req.params.name;
+	  db.sensorlist.count({"username" : name}, function (err, docs) {
+	    console.log(docs);
+	    res.json(docs);
+	  });
+	});
+
+app.get('/getActiveSensorCountPerUser/:name', function (req, res) {
+	  console.log('I received a GET request getSensorCountPerUser');
+		var name = req.params.name;
+	  db.sensorlist.count({"username" : name,"state": "Active"}, function (err, docs) {
+	    console.log(docs);
+	    res.json(docs);
+	  });
+	});
+
+//get sensor count
+app.get('/getSensorCount', function (req, res) {
+		
+	  console.log('I received a GET request');
+
+	  db.sensorlist.count({},(function (err, docs) {
+		console.log(docs);
+		res.json(docs);
+
+		}));
+	});
+
+//get user count
+app.get('/getUserCount', function (req, res) {
+		
+	  console.log('I received a GET request');
+
+	  db.userlist.count({},(function (err, docs) {
+		console.log(docs);
+		res.json(docs);
+
+		}));
+	});
+	
+//physical sensors by name -> for map
+app.get('/physicalsensorlistbyname/:name', function (req, res) {
+	
+  console.log('I received a GET request');
+
+  db.physicalsensorlist.findOne({name: req.params.name},(function (err, docs) {
+	console.log(docs);
+	res.send(docs);
+
+	}));
+});
+
+//get sensor count based on admin name
+app.get('/getSensorCountbyAdmin/:name', function (req, res) {
+	  console.log('I received a GET request getSensorCountbyAdmin');
+		var name = req.params.name;
+	  db.physicalsensorlist.count({"adminname" : name}, function (err, docs) {
+	    console.log(docs);
+	    res.json(docs);
+	  });
+	});
+
+	
+//sensor order counts
+app.get('/sensorOrderCount', function (req, res) {
+	
+  console.log('I received a GET sensorOrderCount request');
+
+  db.sensorlist.count({},(function (err, docs) {
+	console.log(docs);
+	res.json(docs);
+
+	}));
+});
+
+app.get('/UserCount', function (req, res) {
+	
+  console.log('I received a GET UserCount request');
+
+  db.sensorlist.distinct('username',(function (err, docs) {
+	console.log(docs);
+	res.json(docs);
+
+	}));
+});
+
+//get user list for admin
+app.get('/userlist', function (req, res) {
+	
+  console.log('I received a GET request');
+
+  db.userlist.find({"type": "Normal User"},(function (err, docs) {
+	console.log(docs);
+	res.send(docs);
+
+	}));
+});
+
+
+//get user count
+app.get('/userlistcount', function (req, res) {
+	
+  console.log('I received a GET request');
+
+  db.userlist.count({"type": "Normal User"},(function (err, docs) {
+	console.log(docs);
+	res.json(docs);
+
+	}));
+});
+
+//active sensors
+//get sensor count based on admin name
+app.get('/getactivesensorsforadmin', function (req, res) {
+	  console.log('I received a GET request getSensorCountbyAdmin');
+		var name = req.params.name;
+	  db.sensorlist.count({"state" : "Active"}, function (err, docs) {
+	    console.log(docs);
+	    res.json(docs);
+	  });
+	});
+
+//delete physical sensor
+app.delete('/deletephysicalsensor/:id', function (req, res) {
+  var id = req.params.id;
+  console.log(id);
+  db.physicalsensorlist.remove({_id: mongojs.ObjectId(id)}, function (err, doc) {
+    res.json(doc);
+	
+  });
+});
+
 app.listen(3000);
 console.log("Server running on port 3000");
+
+
+
+
+

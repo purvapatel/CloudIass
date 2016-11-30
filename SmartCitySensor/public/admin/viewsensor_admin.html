@@ -26,6 +26,7 @@
                                         <th> Sensor Group</th>
                                         <th> Sensor Type</th>
 										<th> Sensor Location</th>
+										<th> &nbsp; </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -34,6 +35,7 @@
                                         <td> {{sensor.group}}</td>
                                         <td> {{sensor.type}}</td>
 										<td> {{sensor.location}}</td>
+										<td><button class="btn btn-danger" ng-click="remove(sensor._id)">Remove</button></td>
 									</tr>
                                 </tbody>
                             </table>

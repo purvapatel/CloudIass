@@ -22,17 +22,17 @@
                             <table class="table table-bordered table-hover table-striped">
                                 <thead>
                                     <tr>
-                                        <th> Sensor Group</th>
+                                        <th> Sensor Name</th>
                                         <th> Sensor Type</th>
-										<th> Sensor Location</th>
+										<th> Sensor Group</th>
 										<th>&nbsp;</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr ng-repeat="sensor in sensorlist">
-                                        <td> {{sensor.group}}</td>
+                                        <td> {{sensor.name}}</td>
                                         <td> {{sensor.type}}</td>
-										<td> {{sensor.location}}</td>
+										<td> {{sensor.group}}</td>
 										<td><button class="btn btn-success" ng-click="getData(sensor.group, sensor.type)">View</button>
                                     </tr>
                                 </tbody>
@@ -62,3 +62,4 @@
                         </div>
                     </div>
                 </div>
+				<br/>

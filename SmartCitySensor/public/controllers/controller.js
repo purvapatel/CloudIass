@@ -1,6 +1,5 @@
 var app = angular.module('app', ['ngRoute']);
 
-
 app.config(function($routeProvider){
   $routeProvider
 
@@ -105,11 +104,56 @@ app.controller('DashboardController', ['$scope', '$http', '$rootScope', function
     console.log("I got the data I requested");
     console.log(response);
 	
-	if(response.toString() == 'not exist'){
+	if(response == 'not exist'){
 		$rootScope.login_user="";
 	}
 	else{
-		$rootScope.login_user=response.toString();
+		$rootScope.login_user=response;
+		
+		//total numbrer of sensor 
+		$http.get('/getSensorCountPerUser/'+$rootScope.login_user).success(function(response1) {
+		    console.log("I got the data I requested in getsensorCount");
+		    console.log(response1);
+			$scope.sensor_total = response1;
+		});
+		  
+		//total active sensors
+		$http.get('/getActiveSensorCountPerUser/'+$rootScope.login_user).success(function(response1) {
+		    console.log("I got the data I requested in getsensorCount");
+		    console.log(response1);
+			$scope.sensor_active = response1;
+		
+		});
+		  
+		//total bill
+		$http.get('/sensorlist/'+ $rootScope.login_user).success(function(response) {
+		console.log("I got the data I requested");
+		console.log(response);
+		
+		var total=0;
+			
+			for(var i=0; i<response.length; i++)
+			{
+				var hours=0;
+				var minutes=0;
+				
+				//convert minutes into hours and minutes format
+				hours = parseInt(Number(response[i].duration)/60);
+				minutes = parseInt(Number(response[i].duration)%60);
+				var duration =hours.toString()+":"+minutes.toString();
+				
+				//display duration in HH:mm format
+				response[i].duration=duration;
+				
+				//calculate total bill (all sensors)
+				total=total + parseFloat(response[i].bill);
+			}
+		
+		$scope.sensor_bill = total;
+		
+		
+		
+		});	
 	}
 
   });
@@ -147,7 +191,6 @@ app.controller('BillingController', ['$scope', '$http', '$rootScope', function($
 		$scope.sensorlist = response;
 		
 		
-		
 		});
 		
 }]);
@@ -156,7 +199,21 @@ app.controller('BillingController', ['$scope', '$http', '$rootScope', function($
 app.controller('AddSensorController', ['$scope', '$http', '$window', '$rootScope', function($scope, $http,  $window, $rootScope) {
     console.log("Hello from AddSensorController");
   
-  //get sensor group name based on sensor type
+    $scope.getSensorGroup = function(type){
+  	  
+		$http.get('/getsensorgroup/'+type).success(function(response) {
+		console.log(response);
+		$scope.grouplist = [];
+		
+		for(var i=0;i< response.length; i++)
+		{
+			$scope.grouplist.push(response[i].group);
+		}
+	});
+  };
+    
+    
+    //get sensor group name based on sensor type
   $scope.getSensorGroup = function(type){
 	  
 		$http.get('/getsensorgroup/'+type).success(function(response) {
@@ -176,17 +233,18 @@ app.controller('AddSensorController', ['$scope', '$http', '$window', '$rootScope
 		$http.get('/getsensorname/'+group+'/'+type).success(function(response) {
 		console.log(response);
 		$scope.namelist = [];
-		
+	
 		for(var i=0;i< response.length; i++)
 		{
 			$scope.namelist.push(response[i].name);
+		
 		}
 	});
   };
   
   //addSensor() 
   $scope.addSensor = function() {
-	  console.log($scope.sensor);
+	  console.log($scope.sensor+"$scope.sensor$scope.sensor");
 	  $scope.sensor.state = "Active";
 	  $scope.sensor.bill = "0.00";
 	  $scope.sensor.downtime = "";
@@ -278,10 +336,56 @@ app.controller('ViewSensorController', ['$scope', '$http', '$rootScope', functio
 }]);
 
 //maps
-app.controller('MapController', ['$scope', '$http', function($scope, $http) {
-    console.log("Hello from MapController");
-	
 
+app.controller('MapController', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
+		  
+	
+	console.log("Hello from MapController");
+
+	
+	$http.get('/physicalsensorlist_admin/'+'admin').success(function(response) {
+		console.log("I got the data I requested");
+		
+		var locations=[[response[0].name.toString(),response[0].latitude,response[0].longitude]];
+		for(i=1;i<response.length;i++)
+		{
+			locations.push([response[i].name.toString(),response[i].latitude,response[i].longitude]);
+
+			console.log(locations);	
+			
+		}
+	
+			 var map = new google.maps.Map(document.getElementById('map'), {
+				   zoom: 10,
+				   center: new google.maps.LatLng(37.307600, -121.868276),
+				   mapTypeId: google.maps.MapTypeId.ROADMAP
+				 });
+
+				 var infowindow = new google.maps.InfoWindow();
+
+				 var marker, i;
+
+				 for (i = 0; i < locations.length; i++) {  
+				   marker = new google.maps.Marker({
+				     position: new google.maps.LatLng(locations[i][1], locations[i][2]),
+				     map: map
+				   });
+
+				   google.maps.event.addListener(marker, 'click', (function(marker, i) {
+				     return function() {
+				       infowindow.setContent(locations[i][0]);
+				       infowindow.open(map, marker);
+				     }
+				   })(marker, i));
+				 }
+					window.onload = function () {
+				 if (! localStorage.justOnce) {
+				     localStorage.setItem("justOnce", "true");
+				     window.location.reload();
+				 }
+				}
+	
+	});
 }]);
 
 //view and edit profile

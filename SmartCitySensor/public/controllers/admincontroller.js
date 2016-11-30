@@ -33,6 +33,11 @@ adminapp.config(function($routeProvider){
     controller : 'MapCtrl'
   })
   
+  .when('/user',{
+    templateUrl : 'admin/user.html',
+    controller : 'UserCtrl'
+  })
+  
   .when('/profile',{
     templateUrl : 'admin/profile_admin.html',
     controller : 'ProfileCtrl'
@@ -63,11 +68,79 @@ adminapp.controller('DashboardCtrl', ['$scope', '$http', '$rootScope', function(
     console.log("I got the data I requested");
     console.log(response);
 	
-	if(response.toString() == 'not exist'){
+    if(response == 'not exist'){
 		$rootScope.login_user="";
 	}
 	else{
-		$rootScope.login_user=response.toString();
+		$rootScope.login_user=response;
+		
+		//total number of sensors
+		$http.get('/getSensorCountbyAdmin/'+$rootScope.login_user).success(function(response1) {
+		    console.log("I got the data I requested in getsensorCount");
+		    console.log(response1);
+			$scope.sensor_total = response1;
+			
+		  });
+		  
+		//sensor orders
+		$http.get('/sensorOrderCount').success(function(response1) {
+		    console.log("I got the data I requested in getsensorCount");
+		    console.log(response1);
+			$scope.sensor_orders = response1;
+			
+		  });
+		  
+		//total billing
+		$http.get('/sensorlist_admin').success(function(response) {
+		console.log("I got the data I requested");
+		console.log(response);
+		
+		var total=0;
+			
+			for(var i=0; i<response.length; i++)
+			{
+				var hours=0;
+				var minutes=0;
+				
+				//convert minutes into hours and minutes format
+				hours = parseInt(Number(response[i].duration)/60);
+				minutes = parseInt(Number(response[i].duration)%60);
+				var duration =hours.toString()+":"+minutes.toString();
+				
+				//display duration in HH:mm format
+				response[i].duration=duration;
+				
+				//calculate total bill (all sensors)
+				total=total + parseFloat(response[i].bill);
+			}
+		
+		$scope.sensor_bill = total;
+		
+		});
+		
+		//number of users -> have senosrs
+		$http.get('/UserCount').success(function(response1) {
+		    console.log("I got the data I requested in getsensorCount");
+		    console.log(response1);
+			$scope.sensor_user = response1.length;
+			
+		  });
+		  
+		//total number of users
+		$http.get('/userlistcount').success(function(response1) {
+		    console.log("I got the data I requested in getsensorCount");
+		    console.log(response1);
+			$scope.sensor_total_user = response1;
+			
+		  });
+		  
+		//get activate sensor count
+		$http.get('/getactivesensorsforadmin').success(function(response1) {
+		    console.log("I got the data I requested in getsensorCount");
+		    console.log(response1);
+			$scope.sensor_active = response1;
+			
+		  });
 	}
 
   });
@@ -111,7 +184,7 @@ adminapp.controller('BillingCtrl', ['$scope', '$http', '$rootScope', function($s
 }]);
 
 
-//view sensor
+//view sensor -> orders
 adminapp.controller('ViewSensorCtrl', ['$scope', '$http', function($scope, $http) {
     console.log("Hello from ViewSensorCtrl");
 	
@@ -128,10 +201,67 @@ adminapp.controller('ViewSensorCtrl', ['$scope', '$http', function($scope, $http
 }]);
 
 //maps
-adminapp.controller('MapCtrl', ['$scope', '$http', function($scope, $http) {
-    console.log("Hello from MapCtrl");
+adminapp.controller('MapCtrl', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) { 
 	
+	console.log("Hello from MapController");
 
+
+	
+	
+	$http.get('/physicalsensorlist_admin/'+$rootScope.login_user).success(function(response) {
+		console.log("I got the data I requested"+$rootScope.login_user+"check");
+		
+		var locations=[[response[0].name.toString(),response[0].latitude,response[0].longitude]];
+		for(i=1;i<response.length;i++)
+		{
+			locations.push([response[i].name.toString(),response[i].latitude,response[i].longitude]);
+
+console.log(locations);	
+			
+		}	
+	
+/*
+	  var locations = [
+	      ['san jose',37.307604, -121.568276],
+	      ['Coogee Beach', 37.307603, -121.368276, 5],
+	      ['Cronulla Beach', 37.307602, -121.268276, 3],
+	      ['Manly Beach', 37.307601, -121.168271, 2],
+	      ['Maroubra Beach', 37.307600, -121.868276, 1]
+	    ];
+	*/
+	
+	
+			 var map = new google.maps.Map(document.getElementById('map'), {
+				   zoom: 10,
+				   center: new google.maps.LatLng(37.307600, -121.868276),
+				   mapTypeId: google.maps.MapTypeId.ROADMAP
+				 });
+
+				 var infowindow = new google.maps.InfoWindow();
+
+				 var marker, i;
+
+				 for (i = 0; i < locations.length; i++) {  
+				   marker = new google.maps.Marker({
+				     position: new google.maps.LatLng(locations[i][1], locations[i][2]),
+				     map: map
+				   });
+
+				   google.maps.event.addListener(marker, 'click', (function(marker, i) {
+				     return function() {
+				       infowindow.setContent(locations[i][0]);
+				       infowindow.open(map, marker);
+				     }
+				   })(marker, i));
+				 }
+					window.onload = function () {
+				 if (! localStorage.justOnce) {
+				     localStorage.setItem("justOnce", "true");
+				     window.location.reload();
+				 }
+				}
+	
+	});
 }]);
 
 //view and edit profile
@@ -176,10 +306,36 @@ adminapp.controller('CreateSensorCtrl', ['$scope', '$http', '$rootScope', '$wind
 adminapp.controller('ViewAdminSensorCtrl', ['$scope', '$http','$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from ViewSensorCtrl");
 	
+	refresh = function(){
 		$http.get('/physicalsensorlist_admin/'+$rootScope.login_user).success(function(response) {
 		console.log("I got the data I requested");
 		
 		$scope.sensorlist = response;
+		
+		});
+	};
+	refresh();
+		
+		
+	//delete sensor -> remove button
+	$scope.remove = function(id) {
+		console.log(id);
+		$http.delete('/deletephysicalsensor/' + id).success(function(response) {
+			
+		});
+		refresh();
+	};
+
+}]);
+
+//view user
+adminapp.controller('UserCtrl', ['$scope', '$http','$rootScope', function($scope, $http, $rootScope) {
+    console.log("Hello from UserCtrl");
+	
+		$http.get('/userlist').success(function(response) {
+		console.log("I got the data I requested");
+		
+		$scope.userlist = response;
 		
 		});
 
