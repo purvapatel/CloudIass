@@ -163,41 +163,66 @@ app.controller('DashboardController', ['$scope', '$http', '$rootScope', function
 //billing
 app.controller('BillingController', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from BillingController");
+	//session checking
+	$http.get('/sessioncheck').success(function(response) {
+    console.log("I got the data I requested");
+    console.log(response);
 	
-	$http.get('/sensorlist/'+ $rootScope.login_user).success(function(response) {
-		console.log("I got the data I requested");
-		console.log(response);
+	if(response == 'not exist'){
+		$rootScope.login_user="";
+	}
+	else{
+		$rootScope.login_user=response;
 		
-		var total=0;
+		$http.get('/sensorlist/'+ $rootScope.login_user).success(function(response) {
+			console.log("I got the data I requested");
+			console.log(response);
 			
-			for(var i=0; i<response.length; i++)
-			{
-				var hours=0;
-				var minutes=0;
+			var total=0;
 				
-				//convert minutes into hours and minutes format
-				hours = parseInt(Number(response[i].duration)/60);
-				minutes = parseInt(Number(response[i].duration)%60);
-				var duration =hours.toString()+":"+minutes.toString();
-				
-				//display duration in HH:mm format
-				response[i].duration=duration;
-				
-				//calculate total bill (all sensors)
-				total=total + parseFloat(response[i].bill);
-			}
-		
-		$scope.sensor_total = total;
-		$scope.sensorlist = response;
-		
-		
-		});
+				for(var i=0; i<response.length; i++)
+				{
+					var hours=0;
+					var minutes=0;
+					
+					//convert minutes into hours and minutes format
+					hours = parseInt(Number(response[i].duration)/60);
+					minutes = parseInt(Number(response[i].duration)%60);
+					var duration =hours.toString()+":"+minutes.toString();
+					
+					//display duration in HH:mm format
+					response[i].duration=duration;
+					
+					//calculate total bill (all sensors)
+					total=total + parseFloat(response[i].bill);
+				}
+			
+			$scope.sensor_total = total;
+			$scope.sensorlist = response;
+			
+			
+			});
+		}
+	});
 		
 }]);
 
 //add sensor
 app.controller('AddSensorController', ['$scope', '$http', '$window', '$rootScope', function($scope, $http,  $window, $rootScope) {
     console.log("Hello from AddSensorController");
+	
+	//session checking
+	$http.get('/sessioncheck').success(function(response) {
+    console.log("I got the data I requested");
+    console.log(response);
+	
+	if(response == 'not exist'){
+		$rootScope.login_user="";
+	}
+	else{
+		$rootScope.login_user=response;
+	}
+	});
   
     $scope.getSensorGroup = function(type){
   	  
@@ -214,7 +239,7 @@ app.controller('AddSensorController', ['$scope', '$http', '$window', '$rootScope
     
     
     //get sensor group name based on sensor type
-  $scope.getSensorGroup = function(type){
+	$scope.getSensorGroup = function(type){
 	  
 		$http.get('/getsensorgroup/'+type).success(function(response) {
 		console.log(response);
@@ -228,7 +253,7 @@ app.controller('AddSensorController', ['$scope', '$http', '$window', '$rootScope
   };
   
   //get sensor name based on sensor group
-  $scope.getSensorName = function(group,type){
+	$scope.getSensorName = function(group,type){
 	  
 		$http.get('/getsensorname/'+group+'/'+type).success(function(response) {
 		console.log(response);
@@ -272,22 +297,36 @@ app.controller('ViewSensorController', ['$scope', '$http', '$rootScope', functio
     console.log("Hello from ViewSensorController");
 	
 	var refresh = function() {
-		$http.get('/sensorlist/' + $rootScope.login_user).success(function(response) {
+		
+		//session checking
+		$http.get('/sessioncheck').success(function(response) {
 		console.log("I got the data I requested");
+		console.log(response);
 		
-		for(i=0;i<response.length;i++)
-		{
-			if(response[i].state == "Active"){
-				response[i].button_state = "Deactive";
-				console.log("de");
-			}
-			else{
-				response[i].button_state = "Active";
-				console.log("ac");
-			}
+		if(response == 'not exist'){
+			$rootScope.login_user="";
 		}
-		$scope.sensorlist = response;
-		
+		else{
+			$rootScope.login_user=response;
+			
+			$http.get('/sensorlist/' + $rootScope.login_user).success(function(response) {
+			console.log("I got the data I requested");
+			
+			for(i=0;i<response.length;i++)
+			{
+				if(response[i].state == "Active"){
+					response[i].button_state = "Deactive";
+					console.log("de");
+				}
+				else{
+					response[i].button_state = "Active";
+					console.log("ac");
+				}
+			}
+			$scope.sensorlist = response;
+			
+			});
+		}
 		});
 	}
 	
@@ -341,6 +380,17 @@ app.controller('MapController', ['$scope', '$http', '$rootScope', function($scop
 		  
 	
 	console.log("Hello from MapController");
+	
+	//session checking
+	$http.get('/sessioncheck').success(function(response) {
+    console.log("I got the data I requested");
+    console.log(response);
+	
+	if(response == 'not exist'){
+		$rootScope.login_user="";
+	}
+	else{
+		$rootScope.login_user=response;
 
 	
 	$http.get('/physicalsensorlist_admin/'+'admin').success(function(response) {
@@ -386,17 +436,32 @@ app.controller('MapController', ['$scope', '$http', '$rootScope', function($scop
 				}
 	
 	});
+	}
+	});
 }]);
 
 //view and edit profile
 app.controller('ProfileController', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from ProfileController");
 	
+	//session checking
+	$http.get('/sessioncheck').success(function(response) {
+    console.log("I got the data I requested");
+    console.log(response);
+	
+	if(response == 'not exist'){
+		$rootScope.login_user="";
+	}
+	else{
+		$rootScope.login_user=response;
+		
 	$http.get('/userprofile/'+$rootScope.login_user).success(function(response) {
 		console.log("I got the data I requested");
 
 		$scope.user = response;
 		
+	});
+	}
 	});
 	
 }]);
@@ -406,12 +471,25 @@ app.controller('ProfileController', ['$scope', '$http', '$rootScope', function($
 app.controller('SensorDataController', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from SensorDataController");
 	
+	//session checking
+	$http.get('/sessioncheck').success(function(response) {
+    console.log("I got the data I requested");
+    console.log(response);
+	
+	if(response == 'not exist'){
+		$rootScope.login_user="";
+	}
+	else{
+		$rootScope.login_user=response;
+		
 	$http.get('/sensorlist/' + $rootScope.login_user).success(function(response) {
 		console.log("I got the data I requested");
 		
 		$scope.sensorlist = response;
 		
 		});
+	}
+	});
 		
 		$scope.getData = function(group,type) {
 			$http.get('/getsensordata/'+group+'/'+type).success(function(response) {

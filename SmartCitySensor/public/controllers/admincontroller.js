@@ -151,7 +151,18 @@ adminapp.controller('DashboardCtrl', ['$scope', '$http', '$rootScope', function(
 adminapp.controller('BillingCtrl', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from BillingCtrl");
 	
-	$http.get('/sensorlist_admin').success(function(response) {
+	//session checking
+	$http.get('/sessioncheck').success(function(response) {
+    console.log("I got the data I requested");
+    console.log(response);
+	
+    if(response == 'not exist'){
+		$rootScope.login_user="";
+	}
+	else{
+		$rootScope.login_user=response;
+	
+		$http.get('/sensorlist_admin').success(function(response) {
 		console.log("I got the data I requested");
 		console.log(response);
 		
@@ -180,20 +191,36 @@ adminapp.controller('BillingCtrl', ['$scope', '$http', '$rootScope', function($s
 		
 		
 		});
+	}
+	});
 		
 }]);
 
 
 //view sensor -> orders
-adminapp.controller('ViewSensorCtrl', ['$scope', '$http', function($scope, $http) {
+adminapp.controller('ViewSensorCtrl', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from ViewSensorCtrl");
 	
 	var refresh = function() {
-		$http.get('/sensorlist_admin').success(function(response) {
+		
+		//session checking
+		$http.get('/sessioncheck').success(function(response) {
 		console.log("I got the data I requested");
+		console.log(response);
 		
-		$scope.sensorlist = response;
+		if(response == 'not exist'){
+			$rootScope.login_user="";
+		}
+		else{
+			$rootScope.login_user=response;
 		
+			$http.get('/sensorlist_admin').success(function(response) {
+			console.log("I got the data I requested");
+			
+			$scope.sensorlist = response;
+			
+			});
+		}
 		});
 	}
 	refresh();
@@ -205,20 +232,27 @@ adminapp.controller('MapCtrl', ['$scope', '$http', '$rootScope', function($scope
 	
 	console.log("Hello from MapController");
 
-
-	
-	
-	$http.get('/physicalsensorlist_admin/'+$rootScope.login_user).success(function(response) {
-		console.log("I got the data I requested"+$rootScope.login_user+"check");
+	//session checking
+	$http.get('/sessioncheck').success(function(response) {
+		console.log("I got the data I requested");
+		console.log(response);
 		
-		var locations=[[response[0].name.toString(),response[0].latitude,response[0].longitude]];
-		for(i=1;i<response.length;i++)
-		{
-			locations.push([response[i].name.toString(),response[i].latitude,response[i].longitude]);
-
-console.log(locations);	
-			
-		}	
+		if(response == 'not exist'){
+			$rootScope.login_user="";
+		}
+		else{
+			$rootScope.login_user=response;
+	
+	
+			$http.get('/physicalsensorlist_admin/'+$rootScope.login_user).success(function(response) {
+				console.log("I got the data I requested"+$rootScope.login_user+"check");
+		
+			var locations=[[response[0].name.toString(),response[0].latitude,response[0].longitude]];
+			for(i=1;i<response.length;i++)
+			{
+				locations.push([response[i].name.toString(),response[i].latitude,response[i].longitude]);
+				console.log(locations);
+			}	
 	
 /*
 	  var locations = [
@@ -261,6 +295,8 @@ console.log(locations);
 				 }
 				}
 	
+			});
+		}
 	});
 }]);
 
@@ -268,13 +304,25 @@ console.log(locations);
 adminapp.controller('ProfileCtrl', ['$scope', '$http', '$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from ProfileCtrl");
 	
-	$http.get('/userprofile/'+$rootScope.login_user).success(function(response) {
-		console.log("I got the data I requested");
-
-		$scope.user = response;
-		
-	});
+	//session checking
+	$http.get('/sessioncheck').success(function(response) {
+    console.log("I got the data I requested");
+    console.log(response);
 	
+    if(response == 'not exist'){
+		$rootScope.login_user="";
+	}
+	else{
+		$rootScope.login_user=response;
+		
+		$http.get('/userprofile/'+$rootScope.login_user).success(function(response) {
+			console.log("I got the data I requested");
+
+			$scope.user = response;
+			
+		});
+	}
+	});
 	
 }]);
 
@@ -282,6 +330,19 @@ adminapp.controller('ProfileCtrl', ['$scope', '$http', '$rootScope', function($s
 adminapp.controller('CreateSensorCtrl', ['$scope', '$http', '$rootScope', '$window', function($scope, $http, $rootScope, $window) {
     console.log("Hello from CreateSensorCtrl");
 	
+	//session checking
+	$http.get('/sessioncheck').success(function(response) {
+		console.log("I got the data I requested");
+		console.log(response);
+		
+		if(response == 'not exist'){
+			$rootScope.login_user="";
+		}
+		else{
+			$rootScope.login_user=response;
+		}
+	});
+		
   //createSensor() 
   $scope.createSensor = function() {
 		  console.log($scope.sensor);
@@ -307,12 +368,25 @@ adminapp.controller('ViewAdminSensorCtrl', ['$scope', '$http','$rootScope', func
     console.log("Hello from ViewSensorCtrl");
 	
 	refresh = function(){
-		$http.get('/physicalsensorlist_admin/'+$rootScope.login_user).success(function(response) {
+		//session checking
+	$http.get('/sessioncheck').success(function(response) {
 		console.log("I got the data I requested");
+		console.log(response);
 		
-		$scope.sensorlist = response;
-		
-		});
+		if(response == 'not exist'){
+			$rootScope.login_user="";
+		}
+		else{
+			$rootScope.login_user=response;
+			
+			$http.get('/physicalsensorlist_admin/'+$rootScope.login_user).success(function(response) {
+			console.log("I got the data I requested");
+			
+			$scope.sensorlist = response;
+			
+			});
+		}
+	});
 	};
 	refresh();
 		
@@ -332,12 +406,26 @@ adminapp.controller('ViewAdminSensorCtrl', ['$scope', '$http','$rootScope', func
 adminapp.controller('UserCtrl', ['$scope', '$http','$rootScope', function($scope, $http, $rootScope) {
     console.log("Hello from UserCtrl");
 	
-		$http.get('/userlist').success(function(response) {
+		//session checking
+	$http.get('/sessioncheck').success(function(response) {
 		console.log("I got the data I requested");
+		console.log(response);
 		
-		$scope.userlist = response;
+		if(response == 'not exist'){
+			$rootScope.login_user="";
+		}
+		else{
+			$rootScope.login_user=response;
+			
 		
-		});
+			$http.get('/userlist').success(function(response) {
+			console.log("I got the data I requested");
+			
+			$scope.userlist = response;
+			
+			});
+		}
+	});
 
 }]);
 
